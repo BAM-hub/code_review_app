@@ -1,0 +1,67 @@
+import { app, dialog } from 'electron'
+import path from 'path'
+import fs from 'fs'
+
+const META_PATH = path.join(app.getPath('userData'), 'meta.json')
+function getMeta() {
+  try {
+    const data = fs.readFileSync(META_PATH, {
+      encoding: 'utf-8'
+    })
+    return JSON.parse(data)
+  } catch (err) {
+    return []
+  }
+}
+export default function createServer() {
+  const api = express()
+  api.use(express.json())
+  api.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    next()
+  })
+
+  api.get('/api/pick', async (req, res) => {
+    const type = req.query.type
+    const properties = type === 'file' ? ['openFile'] : ['openDirectory']
+    const result = await dialog.showOpenDialog({
+      title: 'Pick a file',
+      properties,
+      filters: [{ name: 'All Files', extensions: ['*'] }]
+    })
+
+    if (result.canceled || result.filePaths.length === 0) {
+      return res.status(400).json({ error: 'No file selected' })
+    }
+
+    return res.json({ filePath: result.filePaths[0] })
+  })
+
+  api.post('/api/project', (req, res) => {
+    try {
+      const { path, name } = req.body
+      const data = getMeta()
+      const exists = data.filter((project) => project.path === path)
+
+      if (exists) {
+        const newData = data.map((project) => {
+          if (project.path === path) {
+            return { path, name }
+          }
+          return project
+        })
+
+        fs.writeFile(META_PATH, JSON.stringify(newData), () => {
+          return res.send({ message: 'Success' })
+        })
+      }
+      fs.writeFile(META_PATH, JSON.stringify([...data, { path, name }]), () => {
+        return res.send({ message: 'Success' })
+      })
+    } catch {
+      return res.status(500).send({ message: 'Fail' })
+    }
+  })
+}
