@@ -1,8 +1,16 @@
 import { app, dialog } from 'electron'
 import path from 'path'
 import fs from 'fs'
+import { spawn } from 'child_process'
+import express from 'express'
 
 const META_PATH = path.join(app.getPath('userData'), 'meta.json')
+const BASE_PATH = app.isPackaged
+  ? path.join(process.resourcesPath, 'app', '.vite', 'build')
+  : __dirname
+
+const scriptPath = path.join(BASE_PATH, 'bin', 'mxlint-cli.exe')
+
 function getMeta() {
   try {
     const data = fs.readFileSync(META_PATH, {
@@ -47,7 +55,7 @@ export default function createServer() {
       const data = getMeta()
       const exists = data.filter((project) => project.path === path)
 
-      if (exists) {
+      if (exists.length) {
         const newData = data.map((project) => {
           if (project.path === path) {
             return { path, name }
@@ -79,5 +87,18 @@ export default function createServer() {
     } catch {
       return res.status(500).send({ message: 'Fail' })
     }
+  })
+
+  api.post('/api/lint', (req, res) => {
+    const { path } = req.body
+
+    const exists = getMeta().filter((project) => project.path === path).length > 0
+    if (!exists) return res.status(404).send({ message: 'project not found' })
+
+    const buildCommand = [`${scriptPath}`, '--input', `${path}`, '--output', BASE_PATH]
+    const childProcess = spawn(buildCommand, { shell: true })
+  })
+  api.listen(5177, () => {
+    console.log('API server running on http://localhost:5177')
   })
 }
