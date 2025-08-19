@@ -1,15 +1,30 @@
-import eslintConfig from '@electron-toolkit/eslint-config'
+import eslint from '@electron-toolkit/eslint-config'
 import eslintConfigPrettier from '@electron-toolkit/eslint-config-prettier'
-import eslintPluginSvelte from 'eslint-plugin-svelte'
+import eslintPluginReact from 'eslint-plugin-react'
+import eslintPluginReactHooks from 'eslint-plugin-react-hooks'
+import eslintPluginReactRefresh from 'eslint-plugin-react-refresh'
 
 export default [
   { ignores: ['**/node_modules', '**/dist', '**/out'] },
-  eslintConfig,
-  ...eslintPluginSvelte.configs['flat/recommended'],
+  eslint,
+  eslintPluginReact.configs.flat.recommended,
+  eslintPluginReact.configs.flat['jsx-runtime'],
   {
-    files: ['**/*.{jsx,svelte}'],
+    settings: {
+      react: {
+        version: 'detect'
+      }
+    }
+  },
+  {
+    files: ['**/*.{js,jsx}'],
+    plugins: {
+      'react-hooks': eslintPluginReactHooks,
+      'react-refresh': eslintPluginReactRefresh
+    },
     rules: {
-      'svelte/no-unused-svelte-ignore': 'off'
+      ...eslintPluginReactHooks.configs.recommended.rules,
+      ...eslintPluginReactRefresh.configs.vite.rules
     }
   },
   eslintConfigPrettier
