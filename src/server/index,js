@@ -39,6 +39,8 @@ export default function createServer() {
     return res.json({ filePath: result.filePaths[0] })
   })
 
+  api.get('/api/project', (req, res) => res.send({ data: getMeta() }))
+
   api.post('/api/project', (req, res) => {
     try {
       const { path, name } = req.body
@@ -58,6 +60,20 @@ export default function createServer() {
         })
       }
       fs.writeFile(META_PATH, JSON.stringify([...data, { path, name }]), () => {
+        return res.send({ message: 'Success' })
+      })
+    } catch {
+      return res.status(500).send({ message: 'Fail' })
+    }
+  })
+
+  api.delete('/api/project', (req, res) => {
+    try {
+      const { path } = req.body
+      const data = getMeta()
+      const newData = data.filter((project) => project.path !== path)
+
+      fs.writeFile(META_PATH, JSON.stringify(newData), () => {
         return res.send({ message: 'Success' })
       })
     } catch {
