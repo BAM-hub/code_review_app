@@ -1,6 +1,6 @@
-# code_review
+# code_review_app
 
-An Electron application with React
+An Electron application with React and TypeScript
 
 ## Recommended IDE Setup
 

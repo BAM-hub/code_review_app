@@ -2,10 +2,11 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import createServer from '../server/index,js'
+import createServer from '../server/index'
 
-function createWindow() {
+function createWindow(): void {
   // Create the browser window.
+  createServer()
   const mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
@@ -36,7 +37,6 @@ function createWindow() {
   }
 }
 
-createServer()
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.

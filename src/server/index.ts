@@ -1,5 +1,5 @@
 import { app, dialog } from 'electron'
-import path from 'path'
+import path from 'node:path'
 import fs from 'fs'
 import { spawn } from 'child_process'
 import express from 'express'
@@ -11,6 +11,7 @@ const BASE_PATH = app.isPackaged
   : __dirname
 
 const scriptPath = path.join(BASE_PATH, 'bin', 'mxlint-local.exe')
+
 function spawnAsync(command, options) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, options)
@@ -18,14 +19,16 @@ function spawnAsync(command, options) {
     child.stderr.pipe(process.stderr)
     child.on('close', (code) => {
       if (code === 0) {
-        resolve()
+        resolve(code)
       } else {
-        reject(code, new Error(`Child process exited with code ${code}.`))
+        console.error(new Error(`Child process exited with code ${code}.`))
+        reject(code)
       }
     })
 
     child.on('error', (err) => {
-      reject(code, new Error(`Failed to spawn child process: ${err.message}`))
+      console.error(new Error(`Failed to spawn child process: ${err.message}`))
+      reject(1)
     })
   })
 }
@@ -109,7 +112,7 @@ export default function createServer() {
   })
 
   api.post('/api/lint', async (req, res) => {
-    const { path, name } = req.body
+    const { path } = req.body
 
     const exists = getMeta().filter((project) => project.path === path).length > 0
     if (!exists) return res.status(404).send({ message: 'project not found' })
