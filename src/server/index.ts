@@ -1,11 +1,35 @@
 import { app, dialog } from 'electron'
 import path from 'node:path'
 import fs from 'fs'
+import { cp, mkdir } from 'fs/promises'
 import { spawn } from 'child_process'
 import express from 'express'
-import { readFile } from 'fs/promises'
+import { readFile, readdir } from 'fs/promises'
+import { Agent, run } from '@openai/agents'
+import { z } from 'zod'
+import { Effect } from 'effect/index'
+
+const OpenAIResponse = z.object({
+  results: z.array(
+    z.object({
+      issue: z.string(),
+      description: z.string(),
+      priority: z.enum(['High', 'Medium', 'Low']),
+      suggested_fix: z.string()
+    })
+  )
+})
+
+const mendixAgent = new Agent({
+  name: 'Mendix expert',
+  instructions: fs.readFileSync('./instructions.txt', 'utf-8'),
+  outputType: OpenAIResponse
+})
 
 const META_PATH = path.join(app.getPath('userData'), 'meta.json')
+const YAML_FILES_PATH = path.join(app.getPath('userData'), 'yaml')
+const LINT_RESULT_PATH = path.join(app.getPath('userData'), 'json')
+
 const BASE_PATH = app.isPackaged
   ? path.join(process.resourcesPath, 'app', '.vite', 'build')
   : __dirname
@@ -43,6 +67,47 @@ function getMeta() {
     return []
   }
 }
+
+function resolveProjectPath(projectPath: string, basePath: string) {
+  const pathPrefix = projectPath.split(':\\').at(-1)?.replaceAll('\\', '__')
+  if (!pathPrefix) throw new Error('Project Path is in invalid format: ' + projectPath)
+  return path.join(basePath, pathPrefix)
+}
+
+async function resolveFiles(path: string) {
+  const readFileList = Effect.promise<string[]>(() =>
+    readdir(path, {
+      recursive: true
+    })
+  )
+
+  const fileList = await Effect.runPromise(readFileList)
+
+  const resolvedObject = {
+    modules: [],
+    files: []
+  }
+
+  const resolvedResult = fileList.reduce((prev, curr) => {
+    const isFile = curr.endsWith('.yaml')
+    const isModule = curr.split('\\').length === 1
+    if (isFile) {
+      const files = [...prev.files, curr]
+      return {
+        ...prev,
+        files
+      }
+    }
+    const modules = [...prev.modules, curr]
+    return {
+      ...prev,
+      modules
+    }
+  }, resolvedObject)
+
+  return resolvedResult
+}
+
 export default function createServer() {
   const api = express()
   api.use(express.json())
@@ -112,44 +177,101 @@ export default function createServer() {
   })
 
   api.post('/api/lint', async (req, res) => {
-    const { path } = req.body
+    try {
+      const { path: projectPath } = req.body
 
-    const exists = getMeta().filter((project) => project.path === path).length > 0
-    if (!exists) return res.status(404).send({ message: 'project not found' })
-    console.log(BASE_PATH)
+      const exists = getMeta().filter((project) => project.path === projectPath).length > 0
+      if (!exists) return res.status(404).send({ message: 'project not found' })
+      console.log(BASE_PATH)
 
-    const buildCommand = [
-      `${scriptPath}`,
-      'export-model',
-      '--input',
-      `${path}`,
-      '--output',
-      `${BASE_PATH}\\temp\\yaml`
-    ].join(' ')
+      await mkdir(resolveProjectPath(projectPath, YAML_FILES_PATH), {
+        recursive: true
+      })
+      // await mkdir(resolveProjectPath(projectPath, LINT_RESULT_PATH), {
+      //   recursive: true
+      // })
+      const buildCommand = [
+        `${scriptPath}`,
+        'export-model',
+        '--input',
+        `${projectPath}`,
+        '--output',
+        resolveProjectPath(projectPath, YAML_FILES_PATH)
+      ].join(' ')
 
-    await spawnAsync(buildCommand, { shell: true })
+      console.log('runing command: ', buildCommand)
 
-    const lintCommand = [
-      `${scriptPath}`,
-      'lint',
-      '--rules',
-      `${BASE_PATH}\\bin\\rules`,
-      '--modelsource',
-      `${BASE_PATH}\\temp\\yaml`,
-      '--json-file',
-      `${BASE_PATH}\\temp\\result.json`
-    ].join(' ')
+      await spawnAsync(buildCommand, { shell: true })
 
-    await spawnAsync(lintCommand, { shell: true }).catch(async (code) => {
-      if (code === 1 || code === 0) {
-        const data = await readFile(`${BASE_PATH}\\temp\\result.json`, 'utf-8')
-        return res.send({ data: JSON.parse(data) })
-      } else {
-        return res.status(500).send({ message: 'somthing went wrong' })
-      }
-    })
+      const lintCommand = [
+        `${scriptPath}`,
+        'lint',
+        '--rules',
+        `${BASE_PATH}\\bin\\rules`,
+        '--modelsource',
+        resolveProjectPath(projectPath, YAML_FILES_PATH),
+        '--json-file',
+        `${BASE_PATH}\\temp\\result.json`
+      ].join(' ')
+
+      console.log('runing command: ', lintCommand)
+
+      await spawnAsync(lintCommand, { shell: true }).catch(async (code) => {
+        if (code === 1 || code === 0) {
+          const data = await readFile(`${BASE_PATH}\\temp\\result.json`, 'utf-8')
+          try {
+            await cp(
+              `${BASE_PATH}\\temp\\result.json`,
+              path.join(resolveProjectPath(projectPath, LINT_RESULT_PATH), 'result.json'),
+              {
+                force: true
+              }
+            )
+          } catch (err) {
+            return res.status(500).send({ message: 'somthing went wrong' })
+          }
+
+          return res.send({ data: JSON.parse(data) })
+        } else {
+          return res.status(500).send({ message: 'somthing went wrong' })
+        }
+      })
+      console.log(resolveProjectPath(projectPath, LINT_RESULT_PATH))
+    } catch (err) {
+      console.error(err)
+      return res.status(500).send({ message: 'somthing went wrong' })
+    }
   })
 
+  api.get('/api/meta-list', async (req, res) => {
+    // this promise should never fail
+    // if it fails that means the user enterd the wrong path
+    // or the previous steps of loading the project Failed
+    // @Todo handle errors later after POC
+    const meta = Effect.promise(() => {
+      const { path: projectPath } = req.query
+      const projectMetaFilesPath = resolveProjectPath(projectPath, YAML_FILES_PATH)
+      return resolveFiles(projectMetaFilesPath)
+    })
+
+    const result = await Effect.runPromise(meta)
+    res.send(result)
+  })
+
+  api.post('/api/ai-review', async (req, res) => {
+    const { filePath, projectPath } = req.body
+    const absFilePath = resolveProjectPath(projectPath, YAML_FILES_PATH)
+    const meta = fs.readFileSync(path.join(absFilePath, filePath))
+
+    const agentRes = await run(
+      mendixAgent,
+      meta + '\n  can you review this domain model meta data file'
+    )
+
+    const agentJson = agentRes.finalOutput
+
+    res.send(agentJson)
+  })
   api.listen(5177, () => {
     console.log('API server running on http://localhost:5177')
   })
