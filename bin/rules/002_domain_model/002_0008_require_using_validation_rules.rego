@@ -1,17 +1,17 @@
 # METADATA
 # scope: package
-# title: Avoid using validation rules for domain model.
-# description: Validation rules on domain model level will give the users unexpected errors.
+# title: Use validation rules for domain model.
+# description: Validation rules on domain model level will garantee the data consistency.
 # authors:
-# - Viktor Berlov <viktor@cinaq.com>
+# - Bashar Amin <bamin@avertra.com>
 # custom:
 #  category: Maintainability
-#  rulename: AvoidUsingValidationRules
-#  severity: MEDIUM
-#  rulenumber: 002_0007
-#  remediation: Remove datamodel validation rules.
-#  input: .*/DomainModels\$DomainModel\.yaml
-package app.mendix.domain_model.avoid_using_validation_rules
+#  rulename: UseValidationRules
+#  severity: HIGH
+#  rulenumber: 002_0008
+#  remediation: Add datamodel validation rules.
+#  input: ".*/DomainModels$DomainModel.yaml"
+package app.mendix.domain_model.require_using_validation_rules
 
 import rego.v1
 annotation := rego.metadata.chain()[1].annotations
@@ -24,7 +24,7 @@ errors contains error if {
     entity := input.Entities[_]
     entity_name := entity.Name
     rules_count := count([rule | rule := entity.ValidationRules[_]])
-    rules_count > 0
+    rules_count == 0
     
     error := sprintf("[%v, %v, %v] Validation rules %v in entity %v",
         [

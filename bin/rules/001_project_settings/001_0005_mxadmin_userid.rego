@@ -1,17 +1,17 @@
 # METADATA
 # scope: package
-# title: Business apps should disable demo users
-# description: No demo users 
+# title: Mendix Admin userid not allowed to be MxAdmin
+# description: Check the mendix admin userid and should not be default value (MxAdmin)
 # authors:
-# - Xiwen Cheng <x@cinaq.com>
+# - Andre Luijkx
 # custom:
 #  category: Security
-#  rulename: DemoUsersDisabled
+#  rulename: MxAdminNotUsed
 #  severity: HIGH
-#  rulenumber: 001_0002
-#  remediation: Disable demo users in Project Security
+#  rulenumber: 001_0005
+#  remediation: Rename the mendix admin userid
 #  input: .*Security\$ProjectSecurity\.yaml
-package app.mendix.project_settings.demo_users_disabled
+package app.mendix.project_settings.mxadmin_userid
 import rego.v1
 annotation := rego.metadata.chain()[1].annotations
 
@@ -19,7 +19,7 @@ default allow := false
 allow if count(errors) == 0
 
 errors contains error if {
-    input.EnableDemoUsers == true
+    input.AdminUserName == "MxAdmin"
     error := sprintf("[%v, %v, %v] %v",
         [
             annotation.custom.severity,
