@@ -1,0 +1,442 @@
+$Type: DomainModels$DomainModel
+Annotations:
+    - $Type: DomainModels$Annotation
+      Caption: "This Domain model defines the data structure of this module. \r\n\r\nAdd new entities and associations to define your database tables and their relations. \r\nWe automatically provision the underlying database for you.\r\n\r\nTo define in-memory data, you can turn off the 'persistable' property on the entity.\r\n\r\nMore info: https://docs.mendix.com/refguide/domain-model"
+      ExportLevel: Hidden
+      Width: 440
+Associations:
+    - $Type: DomainModels$Association
+      ChildConnection: 100;55
+      ChildPointer:
+        subtype: 0
+        data:
+            - 132
+            - 254
+            - 123
+            - 90
+            - 120
+            - 7
+            - 94
+            - 64
+            - 165
+            - 92
+            - 10
+            - 18
+            - 51
+            - 54
+            - 190
+            - 127
+      DeleteBehavior:
+        $Type: DomainModels$DeleteBehavior
+        ChildDeleteBehavior: DeleteMeButKeepReferences
+        ChildErrorMessage: null
+        ParentDeleteBehavior: DeleteMeButKeepReferences
+        ParentErrorMessage: null
+      Documentation: ""
+      ExportLevel: Hidden
+      Name: Player_Team
+      Owner: Default
+      ParentConnection: 0;54
+      ParentPointer:
+        subtype: 0
+        data:
+            - 218
+            - 236
+            - 229
+            - 142
+            - 38
+            - 19
+            - 187
+            - 70
+            - 185
+            - 36
+            - 235
+            - 156
+            - 8
+            - 100
+            - 104
+            - 168
+      Source: null
+    - $Type: DomainModels$Association
+      ChildConnection: 0;51
+      ChildPointer:
+        subtype: 0
+        data:
+            - 132
+            - 254
+            - 123
+            - 90
+            - 120
+            - 7
+            - 94
+            - 64
+            - 165
+            - 92
+            - 10
+            - 18
+            - 51
+            - 54
+            - 190
+            - 127
+      DeleteBehavior:
+        $Type: DomainModels$DeleteBehavior
+        ChildDeleteBehavior: DeleteMeButKeepReferences
+        ChildErrorMessage: null
+        ParentDeleteBehavior: DeleteMeButKeepReferences
+        ParentErrorMessage: null
+      Documentation: ""
+      ExportLevel: Hidden
+      Name: Match_Team
+      Owner: Default
+      ParentConnection: 100;56
+      ParentPointer:
+        subtype: 0
+        data:
+            - 86
+            - 161
+            - 29
+            - 253
+            - 221
+            - 228
+            - 248
+            - 65
+            - 161
+            - 172
+            - 163
+            - 244
+            - 200
+            - 214
+            - 157
+            - 147
+      Source: null
+    - $Type: DomainModels$Association
+      ChildConnection: 42;0
+      ChildPointer:
+        subtype: 0
+        data:
+            - 109
+            - 137
+            - 118
+            - 201
+            - 70
+            - 224
+            - 161
+            - 67
+            - 138
+            - 153
+            - 188
+            - 175
+            - 232
+            - 241
+            - 120
+            - 47
+      DeleteBehavior:
+        $Type: DomainModels$DeleteBehavior
+        ChildDeleteBehavior: DeleteMeButKeepReferences
+        ChildErrorMessage: null
+        ParentDeleteBehavior: DeleteMeButKeepReferences
+        ParentErrorMessage: null
+      Documentation: ""
+      ExportLevel: Hidden
+      Name: Team_Staff
+      Owner: Both
+      ParentConnection: 44;100
+      ParentPointer:
+        subtype: 0
+        data:
+            - 132
+            - 254
+            - 123
+            - 90
+            - 120
+            - 7
+            - 94
+            - 64
+            - 165
+            - 92
+            - 10
+            - 18
+            - 51
+            - 54
+            - 190
+            - 127
+      Source: null
+CrossAssociations: []
+Documentation: ""
+Entities:
+    - $Type: DomainModels$EntityImpl
+      AccessRules:
+        - $Type: DomainModels$AccessRule
+          AllowCreate: true
+          AllowDelete: true
+          AllowedModuleRoles:
+            - MyFirstModule.User
+          DefaultMemberAccessRights: ReadWrite
+          Documentation: ""
+          MemberAccesses:
+            - $Type: DomainModels$MemberAccess
+              AccessRights: ReadWrite
+              Association: ""
+              Attribute: MyFirstModule.Team.Name
+            - $Type: DomainModels$MemberAccess
+              AccessRights: ReadWrite
+              Association: ""
+              Attribute: MyFirstModule.Team.Number
+            - $Type: DomainModels$MemberAccess
+              AccessRights: ReadWrite
+              Association: ""
+              Attribute: MyFirstModule.Team.Description
+            - $Type: DomainModels$MemberAccess
+              AccessRights: ReadWrite
+              Association: ""
+              Attribute: MyFirstModule.Team.Code
+            - $Type: DomainModels$MemberAccess
+              AccessRights: ReadWrite
+              Association: MyFirstModule.Team_Staff
+              Attribute: ""
+          XPathConstraint: ""
+          XPathConstraintCaption: ""
+      Attributes:
+        - $Type: DomainModels$Attribute
+          Documentation: ""
+          ExportLevel: Hidden
+          Name: Name
+          NewType:
+            $Type: DomainModels$StringAttributeType
+            Length: 200
+          Value:
+            $Type: DomainModels$StoredValue
+            DefaultValue: ""
+        - $Type: DomainModels$Attribute
+          Documentation: ""
+          ExportLevel: Hidden
+          Name: Number
+          NewType:
+            $Type: DomainModels$IntegerAttributeType
+          Value:
+            $Type: DomainModels$StoredValue
+            DefaultValue: "0"
+        - $Type: DomainModels$Attribute
+          Documentation: ""
+          ExportLevel: Hidden
+          Name: Description
+          NewType:
+            $Type: DomainModels$StringAttributeType
+            Length: 200
+          Value:
+            $Type: DomainModels$StoredValue
+            DefaultValue: ""
+        - $Type: DomainModels$Attribute
+          Documentation: ""
+          ExportLevel: Hidden
+          Name: Code
+          NewType:
+            $Type: DomainModels$StringAttributeType
+            Length: 200
+          Value:
+            $Type: DomainModels$StoredValue
+            DefaultValue: ""
+      Documentation: ""
+      Events: []
+      ExportLevel: Hidden
+      Indexes: []
+      MaybeGeneralization:
+        $Type: DomainModels$NoGeneralization
+        HasChangedByAttr: false
+        HasChangedDateAttr: false
+        HasCreatedDateAttr: false
+        HasOwnerAttr: false
+        Persistable: true
+      Name: Team
+      Source: null
+      ValidationRules: []
+    - $Type: DomainModels$EntityImpl
+      AccessRules:
+        - $Type: DomainModels$AccessRule
+          AllowCreate: true
+          AllowDelete: true
+          AllowedModuleRoles:
+            - MyFirstModule.User
+          DefaultMemberAccessRights: ReadWrite
+          Documentation: ""
+          MemberAccesses:
+            - $Type: DomainModels$MemberAccess
+              AccessRights: ReadWrite
+              Association: ""
+              Attribute: MyFirstModule.Player.Name
+            - $Type: DomainModels$MemberAccess
+              AccessRights: ReadWrite
+              Association: ""
+              Attribute: MyFirstModule.Player.isCaptin
+            - $Type: DomainModels$MemberAccess
+              AccessRights: ReadWrite
+              Association: ""
+              Attribute: MyFirstModule.Player.Age
+            - $Type: DomainModels$MemberAccess
+              AccessRights: ReadWrite
+              Association: ""
+              Attribute: MyFirstModule.Player.Gender
+            - $Type: DomainModels$MemberAccess
+              AccessRights: ReadWrite
+              Association: MyFirstModule.Player_Team
+              Attribute: ""
+          XPathConstraint: ""
+          XPathConstraintCaption: ""
+      Attributes:
+        - $Type: DomainModels$Attribute
+          Documentation: ""
+          ExportLevel: Hidden
+          Name: Name
+          NewType:
+            $Type: DomainModels$StringAttributeType
+            Length: 200
+          Value:
+            $Type: DomainModels$StoredValue
+            DefaultValue: ""
+        - $Type: DomainModels$Attribute
+          Documentation: ""
+          ExportLevel: Hidden
+          Name: isCaptin
+          NewType:
+            $Type: DomainModels$BooleanAttributeType
+          Value:
+            $Type: DomainModels$StoredValue
+            DefaultValue: "false"
+        - $Type: DomainModels$Attribute
+          Documentation: ""
+          ExportLevel: Hidden
+          Name: Age
+          NewType:
+            $Type: DomainModels$StringAttributeType
+            Length: 200
+          Value:
+            $Type: DomainModels$StoredValue
+            DefaultValue: ""
+        - $Type: DomainModels$Attribute
+          Documentation: ""
+          ExportLevel: Hidden
+          Name: Gender
+          NewType:
+            $Type: DomainModels$StringAttributeType
+            Length: 200
+          Value:
+            $Type: DomainModels$StoredValue
+            DefaultValue: ""
+      Documentation: ""
+      Events: []
+      ExportLevel: Hidden
+      Indexes: []
+      MaybeGeneralization:
+        $Type: DomainModels$NoGeneralization
+        HasChangedByAttr: false
+        HasChangedDateAttr: false
+        HasCreatedDateAttr: false
+        HasOwnerAttr: false
+        Persistable: true
+      Name: Player
+      Source: null
+      ValidationRules: []
+    - $Type: DomainModels$EntityImpl
+      AccessRules:
+        - $Type: DomainModels$AccessRule
+          AllowCreate: true
+          AllowDelete: true
+          AllowedModuleRoles:
+            - MyFirstModule.User
+          DefaultMemberAccessRights: ReadWrite
+          Documentation: ""
+          MemberAccesses:
+            - $Type: DomainModels$MemberAccess
+              AccessRights: ReadWrite
+              Association: ""
+              Attribute: MyFirstModule.Match.Date
+            - $Type: DomainModels$MemberAccess
+              AccessRights: ReadWrite
+              Association: ""
+              Attribute: MyFirstModule.Match.Status
+            - $Type: DomainModels$MemberAccess
+              AccessRights: ReadWrite
+              Association: MyFirstModule.Match_Team
+              Attribute: ""
+          XPathConstraint: ""
+          XPathConstraintCaption: ""
+      Attributes:
+        - $Type: DomainModels$Attribute
+          Documentation: ""
+          ExportLevel: Hidden
+          Name: Date
+          NewType:
+            $Type: DomainModels$DateTimeAttributeType
+            LocalizeDate: true
+          Value:
+            $Type: DomainModels$StoredValue
+            DefaultValue: ""
+        - $Type: DomainModels$Attribute
+          Documentation: ""
+          ExportLevel: Hidden
+          Name: Status
+          NewType:
+            $Type: DomainModels$StringAttributeType
+            Length: 200
+          Value:
+            $Type: DomainModels$StoredValue
+            DefaultValue: ""
+      Documentation: ""
+      Events: []
+      ExportLevel: Hidden
+      Indexes: []
+      MaybeGeneralization:
+        $Type: DomainModels$NoGeneralization
+        HasChangedByAttr: false
+        HasChangedDateAttr: false
+        HasCreatedDateAttr: false
+        HasOwnerAttr: false
+        Persistable: true
+      Name: Match
+      Source: null
+      ValidationRules: []
+    - $Type: DomainModels$EntityImpl
+      AccessRules:
+        - $Type: DomainModels$AccessRule
+          AllowCreate: true
+          AllowDelete: true
+          AllowedModuleRoles:
+            - MyFirstModule.User
+          DefaultMemberAccessRights: None
+          Documentation: ""
+          MemberAccesses:
+            - $Type: DomainModels$MemberAccess
+              AccessRights: ReadWrite
+              Association: ""
+              Attribute: MyFirstModule.Staff.Name
+            - $Type: DomainModels$MemberAccess
+              AccessRights: ReadWrite
+              Association: MyFirstModule.Team_Staff
+              Attribute: ""
+          XPathConstraint: ""
+          XPathConstraintCaption: ""
+      Attributes:
+        - $Type: DomainModels$Attribute
+          Documentation: ""
+          ExportLevel: Hidden
+          Name: Name
+          NewType:
+            $Type: DomainModels$StringAttributeType
+            Length: 200
+          Value:
+            $Type: DomainModels$StoredValue
+            DefaultValue: ""
+      Documentation: ""
+      Events: []
+      ExportLevel: Hidden
+      Indexes: []
+      MaybeGeneralization:
+        $Type: DomainModels$NoGeneralization
+        HasChangedByAttr: false
+        HasChangedDateAttr: false
+        HasCreatedDateAttr: false
+        HasOwnerAttr: false
+        Persistable: true
+      Name: Staff
+      Source: null
+      ValidationRules: []
