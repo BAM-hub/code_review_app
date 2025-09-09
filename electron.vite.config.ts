@@ -3,6 +3,8 @@ import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 import { viteStaticCopy } from 'vite-plugin-static-copy'
 import path from 'path'
+import { tanstackRouter } from '@tanstack/router-plugin/vite'
+
 // @ts-ignore
 import tailwindcss from '@tailwindcss/vite'
 
@@ -34,6 +36,14 @@ export default defineConfig({
         '@': path.resolve(__dirname, './src/renderer/src')
       }
     },
-    plugins: [react(), tailwindcss()]
+    plugins: [
+      tanstackRouter({
+        target: 'react',
+        autoCodeSplitting: true,
+        routesDirectory: path.resolve(__dirname, './src/renderer/src/routes')
+      }),
+      react(),
+      tailwindcss()
+    ]
   }
 })

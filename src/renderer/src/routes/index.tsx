@@ -1,5 +1,6 @@
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@radix-ui/react-collapsible'
-import { Button } from './components/ui/button'
+import { Button } from '../components/ui/button'
 import {
   Card,
   CardAction,
@@ -8,8 +9,12 @@ import {
   CardFooter,
   CardHeader,
   CardTitle
-} from './components/ui/card'
+} from '../components/ui/card'
 import { useQuery } from '@tanstack/react-query'
+
+export const Route = createFileRoute('/')({
+  component: App
+})
 
 function formatLintResponse(data) {
   return data.testsuites
@@ -47,7 +52,14 @@ function App(): React.JSX.Element {
             <div className="flex justify-between">
               <CardHeader>{item.name}</CardHeader>
               <CardContent>
-                <Button>go</Button>
+                <Link
+                  to="/projects/$projectPath"
+                  params={{
+                    projectPath: item.path
+                  }}
+                >
+                  <Button>go</Button>
+                </Link>
               </CardContent>
             </div>
             <CardFooter>
