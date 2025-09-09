@@ -8,6 +8,7 @@ import { readFile, readdir } from 'fs/promises'
 import { Agent, run } from '@openai/agents'
 import { z } from 'zod'
 import { Effect } from 'effect/index'
+import { Serializable } from 'node:child_process'
 
 const OpenAIResponse = z.object({
   results: z.array(
@@ -15,7 +16,9 @@ const OpenAIResponse = z.object({
       issue: z.string(),
       description: z.string(),
       priority: z.enum(['High', 'Medium', 'Low']),
-      suggested_fix: z.string()
+      suggested_fix: z.string(),
+      status: z.enum(['Pending', 'Approved', 'Rejected', 'Skipped']).nullable().optional(),
+      result: z.enum(['returned', 'new', 'passed', 'failed'])
     })
   )
 })
@@ -29,6 +32,7 @@ const mendixAgent = new Agent({
 const META_PATH = path.join(app.getPath('userData'), 'meta.json')
 const YAML_FILES_PATH = path.join(app.getPath('userData'), 'yaml')
 const LINT_RESULT_PATH = path.join(app.getPath('userData'), 'json')
+const AI_RESULT_PATH = path.join(app.getPath('userData'), 'json', 'ai')
 
 const BASE_PATH = app.isPackaged
   ? path.join(process.resourcesPath, 'app', '.vite', 'build')
@@ -36,11 +40,22 @@ const BASE_PATH = app.isPackaged
 
 const scriptPath = path.join(BASE_PATH, 'bin', 'mxlint-local.exe')
 
-function spawnAsync(command, options) {
+function spawnAsync(
+  command: string,
+  options: { shell: boolean },
+  onstdout?: (message: Serializable) => void
+) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, options)
     child.stdout.pipe(process.stdout)
     child.stderr.pipe(process.stderr)
+
+    if (onstdout) {
+      child.on('message', (message) => {
+        onstdout(message)
+      })
+    }
+
     child.on('close', (code) => {
       if (code === 0) {
         resolve(code)
@@ -111,7 +126,7 @@ async function resolveFiles(path: string) {
 export default function createServer() {
   const api = express()
   api.use(express.json())
-  api.use((req, res, next) => {
+  api.use((_, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*')
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
@@ -187,9 +202,7 @@ export default function createServer() {
       await mkdir(resolveProjectPath(projectPath, YAML_FILES_PATH), {
         recursive: true
       })
-      // await mkdir(resolveProjectPath(projectPath, LINT_RESULT_PATH), {
-      //   recursive: true
-      // })
+
       const buildCommand = [
         `${scriptPath}`,
         'export-model',
@@ -236,7 +249,7 @@ export default function createServer() {
           return res.status(500).send({ message: 'somthing went wrong' })
         }
       })
-      console.log(resolveProjectPath(projectPath, LINT_RESULT_PATH))
+      console.log(resolveProjectPath(projectPath, YAML_FILES_PATH))
     } catch (err) {
       console.error(err)
       return res.status(500).send({ message: 'somthing went wrong' })
@@ -260,18 +273,40 @@ export default function createServer() {
 
   api.post('/api/ai-review', async (req, res) => {
     const { filePath, projectPath } = req.body
+    const cachePath = resolveProjectPath(projectPath, AI_RESULT_PATH)
+    const filePathAsName = filePath.replaceAll('\\', '__')
+    const data = await readFile(path.join(cachePath, filePathAsName + '.json'), 'utf-8').catch(
+      () => null
+    )
     const absFilePath = resolveProjectPath(projectPath, YAML_FILES_PATH)
     const meta = fs.readFileSync(path.join(absFilePath, filePath))
 
-    const agentRes = await run(
-      mendixAgent,
-      meta + '\n  can you review this domain model meta data file'
-    )
+    if (data) {
+      // in this case the review was once done we need to forward the old results
+      // and then let mr gpt test against them for fixes keeping in mind skipped or rejected tests
+      const agentRes = await run(
+        mendixAgent,
+        meta + '\n  can you review this based ont these test cases you provieded erlier' + data
+      )
+      const agentJson = agentRes.finalOutput
+      return res.send(agentJson)
+    } else {
+      const agentRes = await run(mendixAgent, meta + '\n  can you review this')
 
-    const agentJson = agentRes.finalOutput
-
-    res.send(agentJson)
+      const agentJson = agentRes.finalOutput
+      await mkdir(cachePath, { recursive: true })
+      fs.writeFile(
+        path.join(cachePath, filePathAsName + '.json'),
+        JSON.stringify(agentJson),
+        () => {
+          console.log(cachePath)
+          console.log('cached file')
+          return res.send(agentJson)
+        }
+      )
+    }
   })
+
   api.listen(5177, () => {
     console.log('API server running on http://localhost:5177')
   })
